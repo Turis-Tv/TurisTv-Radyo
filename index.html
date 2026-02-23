@@ -49,7 +49,7 @@
             width: 100%;
             height: 100%;
             background-color: #000000;
-            z-index: 99999; /* En üstte durması için Z-Index artırıldı */
+            z-index: 99999;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -64,6 +64,8 @@
             margin-bottom: 40px;
             border-radius: 20px;
             object-fit: contain;
+            /* Resim yüklenemezse belli olsun diye gri arka plan */
+            background-color: #1a1a1a; 
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
         }
 
@@ -219,7 +221,7 @@
             background: #252525;
         }
 
-        /* AKTİF KART STİLİ */
+        /* AKTİF KART STİLİ (Kalıcı Kırmızı Çerçeve) */
         .radio-card.active-card {
             border: 2px solid #ff3366 !important; 
             background-color: #252525;
@@ -295,22 +297,21 @@
 
     <!-- SİYAH GİRİŞ EKRANI -->
     <div id="start-overlay">
-        <!-- BÜYÜK RESİM -->
-        <img id="start-image" src="https://od.lk/s/NzJfNDYwMjg4NDRf/istockphoto-847192060-612x612-removebg-preview.png" alt="Logo">
+        <!-- Logo Yolu: Kendi klasör yapına uygun (Logolar/resim.webp) -->
+        <!-- Eğer giriş logom da gelmiyor dersen: "image/katplay.png" dosyasının orada olduğundan emin ol -->
+        <img id="start-image" src="image/katplay.png" alt="Logo">
         
-        <!-- SİYAH/GRİ BUTON -->
         <button class="start-btn" onclick="enterApp()">Uygulamaya Giriş</button>
     </div>
 
     <main>
         <div class="menu">
             <a href="javascript:void(0)" onclick="filterCategory('All')">Hepsi</a>
-            <a href="javascript:void(0)" onclick="showFavorites()">Favori</a>
+            <a href="javascript:void(0)" onclick="showFavorites()">Favorilerim</a>
             <a href="javascript:void(0)" onclick="filterCategory('Arabesk')">Arabesk</a>
             <a href="javascript:void(0)" onclick="filterCategory('Pop')">Pop</a>
             <a href="javascript:void(0)" onclick="filterCategory('Haber')">Haber</a>
             <a href="javascript:void(0)" onclick="filterCategory('Dini')">Dini</a>
-            <a href="javascript:void(0)" onclick="filterCategory('Spor')">Spor</a>
         </div>
 
         <div id="header">
@@ -319,7 +320,7 @@
 
         <div class="player-container">
             <div class="current-info">
-                <img id="now-playing-logo" src="https://od.lk/s/NzJfNDYwMjg4NDRf/istockphoto-847192060-612x612-removebg-preview.png" class="current-logo">
+                <img id="now-playing-logo" src="image/katplay.png" class="current-logo">
                 <div class="now-playing-text">
                     <div id="now-playing-name">Kanal Seçiniz</div>
                     <div id="status">Gereed</div>
@@ -345,7 +346,7 @@
         // GLOBAL DEĞİŞKENLER
         let currentStationId = null;
         let currentHowl = null;
-        let isNavigatingAway = false; // Geri tuşu ile çıkış yapıldığını anlayan özel değişken
+        let isNavigatingAway = false;
 
         // --- 1. GİRİŞ VE TARİHÇE AYARLARI ---
         function enterApp() {
@@ -360,7 +361,6 @@
                 elem.webkitRequestFullscreen();
             }
 
-            // GİRİŞ EKRANINI GİZLE
             const overlay = document.getElementById('start-overlay');
             overlay.style.opacity = '0';
             setTimeout(() => {
@@ -368,12 +368,10 @@
             }, 300);
 
             if (!currentHowl) {
-                // Hiçbir şey çalmıyorsa ID 1'i başlat
                 if (stations.length > 0) {
                     playStation(stations[0]); 
                 }
             } else {
-                // Zaten çalıyorsa, ÇALAN KARTA KAYDIR (SCROLL)
                 setTimeout(() => {
                     if (currentStationId) {
                         const activeCard = document.getElementById('card-' + currentStationId);
@@ -385,24 +383,20 @@
             }
         }
 
-        // --- 2. GERİ TUŞU KONTROLÜ (FİZİKSEL TUŞ) ---
+        // --- 2. GERİ TUŞU KONTROLÜ (DÜZELTİLDİ) ---
+        // Geri tuşuna basınca siyah ekran gelmesin, direkt menüye gitsin.
         window.onpopstate = function(event) {
-            // Geri tuşuna basıldı! Çıkış modunu aktif et
             isNavigatingAway = true; 
-            
             if (currentHowl) { currentHowl.stop(); }
-            
             // DİREKT MENÜYE GİT
             window.location.replace("https://turistvmenu.pages.dev/");
         };
 
         // --- 3. UYKU MODU DÜZELTMESİ ---
         function handleFullscreenExit() {
-            // EĞER GERİ TUŞUNA BASILDIYSA HİÇBİR ŞEY YAPMA
-            if (isNavigatingAway) return;
-
-            // Eğer geri tuşu değil de, uyku modu yüzünden ekran küçüldüyse:
+            if (isNavigatingAway) return; // Geri tuşuna basıldıysa karışma
             if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                // Sadece uyku modu/ekran kilidi sebebiyle çıktıysa Siyah Ekranı getir
                 const overlay = document.getElementById('start-overlay');
                 overlay.style.display = 'flex';
                 setTimeout(() => {
@@ -410,7 +404,6 @@
                 }, 10);
             }
         }
-
         document.addEventListener('fullscreenchange', handleFullscreenExit);
         document.addEventListener('webkitfullscreenchange', handleFullscreenExit);
 
@@ -418,134 +411,23 @@
         document.addEventListener('contextmenu', event => event.preventDefault());
 
         // --- RADYO SİSTEMİ ---
+        // NOT: Resim yolları "Logolar/resim.webp" formatında.
+        // Bu, index.html dosyasının yanında "Logolar" klasörü varsa %100 çalışır.
         const stations = [
-            { id: 1, name: "Baba Radyo", logo: "https://od.lk/s/NzJfNTA4NzI5ODFf/baba-radyo.webp", url: "https://babaradyo.turkhosted.com/best/babaradyo.stream/playlist.m3u8", cat: "Arabesk" },
-            { id: 2, name: "Best Kına", logo: "https://od.lk/s/NzJfNTA4NzMwMzZf/best-kina-dinle.webp", url: "http://wowza3.radyotvonline.com/best/bestkina.stream/playlist.m3u8", cat: "Arabesk" },
-            { id: 3, name: "Radyo Güney", logo: "https://od.lk/s/NzJfNTA4NzEzODFf/adana-radyo-guney.webp", url: "https://stream.radyolarburada.com/radio/8250/stream", cat: "Arabesk" },
-            { id: 4, name: "Adıyaman Radyo", logo: "https://od.lk/s/NzJfNTA4NzE0ODhf/adiyaman-radyo-life.webp", url: "http://yayin2.canliyayin.org:8698/;*.mp3", cat: "Arabesk" },
-            { id: 5, name: "Adıyaman Radyo Tek", logo: "https://od.lk/s/NzJfNTA4NzE1Njdf/radyo-tek-adiyaman.webp", url: "https://radyo.yayindakiler.com:3102/stream", cat: "Arabesk" },
-            { id: 6, name: "Adıyaman Üniversitesi Radyosu", logo: "https://od.lk/s/NzJfNTA4NzE2NThf/adyu.webp", url: "https://adyufm.adiyaman.edu.tr/yayin.ogg", cat: "Arabesk" },
-            { id: 7, name: "Afyon Armoni FM", logo: "https://od.lk/s/NzJfNTA4NzE2Nzlf/afyon-armoni-fm.webp", url: "http://radyo.yayindakiler.com:4084/;", cat: "Arabesk" },
-            { id: 8, name: "Afyon Gün FM", logo: "https://od.lk/s/NzJfNTA4NzE2OTJf/afyon-gun-fm.webp", url: "https://ssl120.radyotelekom.com.tr/8130/;", cat: "Arabesk" },
-            { id: 9, name: "Afyon Radyo Sultan", logo: "https://od.lk/s/NzJfNTA4NzE3MDRf/afyon-radyo-sultan.webp", url: "http://afyonradyosultan.ozelip.com:9920/;", cat: "Arabesk" },
-            { id: 10, name: "Afyon Radyo Tek", logo: "https://od.lk/s/NzJfNTA4NzE4MDdf/afyon-radyo-tek.webp", url: "https://radyo.yayindakiler.com:8004/stream?/;stream.mp3", cat: "Arabesk" },
-            { id: 11, name: "A Haber", logo: "Logolar/a-haber-radyo.webp", url: "https://trkvz-radyolar.ercdn.net/ahaberradyo/playlist.m3u8", cat: "Haber" },
-            { id: 12, name: "Akra FM", logo: "https://od.lk/s/NzJfNTA4NzIxMThf/akra-fm.webp", url: "https://cdn3.akradyo.net/akracanli2/_definst_/livestream_aac/playlist.m3u8", cat: "Arabesk" },
-            { id: 13, name: "Akustikland Dinle", logo: "https://od.lk/s/NzJfNTA4NzIxMzJf/radyo-akustikland-dinle.webp", url: "https://moondigitaledge.radyotvonline.net/akustikland/playlist.m3u8", cat: "Arabesk" },
-            { id: 14, name: "Akustik Türküler", logo: "https://od.lk/s/NzJfNTA4NzIxNDFf/akustik-turkuler-dinle.webp", url: "http://46.20.4.54:8020/;stream.mp3", cat: "Arabesk" },
-            { id: 15, name: "Alem Fm", logo: "https://od.lk/s/NzJfNTA4NzIzMzhf/alem-fm.webp", url: "https://turkmedya.radyotvonline.net/alemfmaac", cat: "Arabesk" },
-            { id: 16, name: "Altın Şarkılar", logo: "https://od.lk/s/NzJfNTA4NzI0NzJf/radyo-altin-sarkilar.webp", url: "https://moondigitaledge.radyotvonline.net/altinsarkilar/playlist.m3u8", cat: "Arabesk" },
-            { id: 17, name: "Ankara Havaları", logo: "https://od.lk/s/NzJfNTA4NzI1NTFf/radyo-ankara-havalari.webp", url: "https://moondigitaledge.radyotvonline.net/ankarahavalari/playlist.m3u8", cat: "Arabesk" },
-            { id: 18, name: "Ankara Park Fm", logo: "https://od.lk/s/NzJfNTA4NzI1NTlf/park-fm-ankara.webp", url: "https://stream.netradyom.com/listen/parkfm/radio.mp3;", cat: "Arabesk" },
-            { id: 19, name: "Arabeskland", logo: "https://od.lk/s/NzJfNTA4NzI1ODFf/radyo-arabeskland-dinle.webp", url: "https://moondigitaledge.radyotvonline.net/arabeskland/playlist.m3u8", cat: "Arabesk" },
-            { id: 20, name: "Kuran Radyosu", logo: "https://od.lk/s/NzJfNTA4NzI2ODNf/arapca-kuran-radyosu-dinle.webp", url: "https://ssl4.radyotvonline.com/radyohome/kuranarapca.stream_aac/chunklist_w1983141519.m3u8", cat: "Dini" },
-            { id: 21, name: "Arkadaş Fm", logo: "https://od.lk/s/NzJfNTA4NzI2OTRf/arkadas-fm-dinle.webp", url: "https://radyo.yayindakiler.com:4134/stream/;type=mp3", cat: "Arabesk" },
-            { id: 22, name: "Art Fm", logo: "https://od.lk/s/NzJfNTA4NzI2OTlf/art-fm-antalya.webp", url: "https://anadolu.liderhost.com.tr/9338/stream/;stream.mp3", cat: "Arabesk" },
-            { id: 23, name: "Aşk Fm", logo: "https://od.lk/s/NzJfNTA4NzI3MDZf/ask-fm-dinle.webp", url: "https://stream.netradyom.com/radio/8000/radio.mp3", cat: "Arabesk" },
-            { id: 24, name: "A Spor", logo: "https://od.lk/s/NzJfNTA4NzI3MTVf/a-spor-radyo.webp", url: "https://trkvz-radyolar.ercdn.net/asporradyo/playlist.m3u8", cat: "Spor" },
-            { id: 25, name: "ASR Fm", logo: "https://od.lk/s/NzJfNTA4NzI3MjJf/adiyamanin-sesi-radyosu.webp", url: "https://radyo.yayindakiler.com:4072/stream", cat: "Arabesk" },
-            { id: 26, name: "Atlantis Fm", logo: "https://od.lk/s/NzJfNTA4NzI5NTRf/atlantis-fm-ankara.webp", url: "http://46.20.4.5:9400/;", cat: "Arabesk" },
-            { id: 27, name: "Radyo Avrasya", logo: "https://od.lk/s/NzJfNTA4NzI5Nzdf/radyo-avrasya-turk.webp", url: "https://sslyayin.netyayin.net:10909/;/;stream.mp3", cat: "Arabesk" },
-            { id: 28, name: "Babyland", logo: "https://od.lk/s/NzJfNTA4NzI5ODNf/radyo-babyland-dinle.webp", url: "https://moondigitaledge.radyotvonline.net/babyland/playlist.m3u8", cat: "Arabesk" },
-            { id: 29, name: "Batı Radyo", logo: "https://od.lk/s/NzJfNTA4NzI5ODlf/izmir-bati-radyo-dinle.webp", url: "https://sslyayin.netyayin.net:10902/;", cat: "Arabesk" },
-            { id: 30, name: "Bayram Fm", logo: "https://od.lk/s/NzJfNTA4NzMwMTFf/bayram-fm.webp", url: "https://sslyayin.netyayin.net/3442/stream", cat: "Arabesk" },
-
-            { id: 31, name: "Adana FM", logo: "https://od.lk/s/NzJfNTA4NzE3OThf/adana-fm.webp", url: "https://host.onlineradyotv.net:2020/stream/adanafm", cat: "Arabesk" },
-            { id: 32, name: "Best Rap", logo: "https://od.lk/s/NzJfNTA4NzMwNDZf/best-rap-dinle.webp", url: "http://wowza3.radyotvonline.com/best/bestgicir.stream/chunklist_w541722078.m3u8", cat: "Arabesk" },
-            { id: 33, name: "Bilecik Fm", logo: "https://od.lk/s/NzJfNTA4NzMwNTNf/bilecik-fm.webp", url: "http://bilecikfm.kesintisizyayin.com:9980/;", cat: "Arabesk" },
-            { id: 34, name: "Bizim İller", logo: "https://od.lk/s/NzJfNTA4NzMwNThf/bizim-iller-radyo.webp", url: "https://radyo.yayindakiler.com:4078/stream?/;stream.mp3", cat: "Dini" },
-            { id: 35, name: "Bizim Radyo", logo: "https://od.lk/s/NzJfNTA4NzMwNjhf/bizim-radyo-dinle.webp", url: "https://ip132.ozelip.com:7017/;", cat: "Arabesk" },
-            { id: 36, name: "Bolu Radyo Su", logo: "https://od.lk/s/NzJfNTA4NzMxMTVf/radyo-su.webp", url: "http://yayin.turkhosted.com:6068/;", cat: "Arabesk" },
-            { id: 37, name: "Bursa line", logo: "https://od.lk/s/NzJfNTA4NzMxMjhf/bursa-radio-line.webp", url: "https://online.radioline.fm:8443/stream", cat: "Arabesk" },
-            { id: 38, name: "Bursa Venüs", logo: "https://od.lk/s/NzJfNTA4NzMxMzBf/bursa-radyo-venus.webp", url: "https://yayin.radyovenus.com.tr:3416/;", cat: "Arabesk" },
-            { id: 39, name: "Bursa Yörem", logo: "https://od.lk/s/NzJfNTA4NzMxNjJf/bursa-radyo-yorem.webp", url: "http://live4.radyoyayini.com:9420/;", cat: "Arabesk" },
-            { id: 40, name: "Çanakkale Boğaz", logo: "https://od.lk/s/NzJfNTA4NzMyNzZf/canakkale-bogaz-fm.webp", url: "https://radyo.yayin.com.tr:5938/;stream.mp3", cat: "Arabesk" },
-            { id: 41, name: "Çanakkale Çan", logo: "https://od.lk/s/NzJfNTA4NzMyODVf/canakkale-radyo-can.webp", url: "https://sssx.radyosfer.com/canfm/stream", cat: "Arabesk" },
-            { id: 42, name: "Çanakkale Kampüs", logo: "https://od.lk/s/NzJfNTA4NzMyOTRf/canakkale-kampus-fm.webp", url: "http://193.255.97.57/;stream/1", cat: "Arabesk" },
-            { id: 43, name: "Çay Solmaz", logo: "https://od.lk/s/NzJfNTA4NzMzMDZf/cay-solmaz-fm.webp", url: "https://sssx.radyosfer.com/solmazfm/stream?/;stream.mp3", cat: "Arabesk" },
-            { id: 44, name: "Çorum Çağrı Fm", logo: "https://od.lk/s/NzJfNTA4NzMzMjFf/corum-cagri-fm.png", url: "https://sssx.radyosfer.com/cagrifm/stream", cat: "Dini" },
-            { id: 45, name: "Çorum Gün", logo: "https://od.lk/s/NzJfNTA4NzMzNjhf/corum-radyo-gun.webp", url: "https://stream.rcast.net/66786", cat: "Arabesk" },
-            { id: 46, name: "CRI Türk", logo: "https://od.lk/s/NzJfNTA4NzMzODZf/cri-turk.webp", url: "https://criturk.radyotvonline.net/criturk", cat: "Arabesk" },
-            { id: 47, name: "Damar Fm", logo: "https://od.lk/s/NzJfNTA4NzMzOTdf/damar-fm-turkiye-dinle.webp", url: "https://yayin.damarfm.com:8080/stream;", cat: "Arabesk" },
-            { id: 48, name: "Damar Türk", logo: "https://od.lk/s/NzJfNTA4NzM2ODhf/damar-turk-fm-dinle.webp", url: "https://live.radyositesihazir.com/7000/stream/;stream.mp3", cat: "Arabesk" },
-            { id: 49, name: "Danceland", logo: "https://od.lk/s/NzJfNTA4NzM2OTlf/radyo-danceland-dinle.webp", url: "https://moondigitaledge.radyotvonline.net/danceland/playlist.m3u8", cat: "Pop" },
-            { id: 50, name: "Davet Radyo", logo: "https://od.lk/s/NzJfNTA4NzM3MDlf/davet-radyo-dinle.webp", url: "https://n07.radiojar.com/ggu0fd6qu2wtv?rj-ttl=5&rj-tok=AAABiGP5q3IAaDa4FTEyw-cSQw", cat: "Dini" },
-            { id: 51, name: "Dinar Dost Fm", logo: "https://od.lk/s/NzJfNTA4NzM3MzVf/dinar-dost-fm.webp", url: "https://radyo1.radyo-dinle.tc/8062/stream", cat: "Pop" },
-            { id: 52, name: "Discoland", logo: "https://od.lk/s/NzJfNTA4NzM3NzBf/radyo-discoland-dinle.webp", url: "https://moondigitaledge.radyotvonline.net/discoland/playlist.m3u8", cat: "Pop" },
-            { id: 53, name: "Diyanet Kuran", logo: "https://od.lk/s/NzJfNTA4NzM3OTVf/diyanet-kuran-radyo.webp", url: "https://eustr76.mediatriple.net/videoonlylive/mtikoimxnztxlive/broadcast_5e3c14192aa92.smil/playlist.m3u8", cat: "Dini" },
-            { id: 54, name: "Doğan 21", logo: "https://od.lk/s/NzJfNTA4NzM4MjNf/dogan-21-fm.webp", url: "https://radyo.yayindakiler.com:3024/stream?/;stream.mp3", cat: "Arabesk" },
-            { id: 55, name: "Easyland", logo: "https://od.lk/s/NzJfNTA4NzM4NTJf/radyo-easyland-dinle.webp", url: "https://moondigitaledge.radyotvonline.net/easyland/playlist.m3u8", cat: "Pop" },
-            { id: 56, name: "Körfez Fm", logo: "https://od.lk/s/NzJfNTA4NzM4Nzhf/korfez-fm-balikesir.webp", url: "https://ssl180.ozelip.com/asistan/stream/63fce6aebc19dca16c183a910ccd9a5a", cat: "Arabesk" },
-            { id: 57, name: "Radyo Efsane", logo: "https://od.lk/s/NzJfNTA4NzM4OTBf/radyo-efsane-dortlu.webp", url: "https://moondigitaledge.radyotvonline.net/efsane4lu/playlist.m3u8", cat: "Arabesk" },
-            { id: 58, name: "Ege Havaları", logo: "https://od.lk/s/NzJfNTA4NzM5NTBf/radyo-ege-havalari.webp", url: "https://moondigitaledge.radyotvonline.net/egehavalari/playlist.m3u8", cat: "Arabesk" },
-            { id: 59, name: "Elazığ Hit", logo: "https://od.lk/s/NzJfNTA4NzQwOTFf/elazig-hit-fm-dinle.webp", url: "http://yayin.turkiletisim.com.tr:1094/;", cat: "Pop" },
-            { id: 60, name: "Elazığ Mavi", logo: "https://od.lk/s/NzJfNTA4NzQxMDhf/elazig-mavi-radyo-dinle.webp", url: "https://yayin.turkhosted.com/elazigmaviradyo/stream", cat: "Arabesk" },
-            { id: 61, name: "Elazığ Kulüp", logo: "https://od.lk/s/NzJfNTA4NzQxMjBf/elazig-radyo-kulup-dinle.webp", url: "https://radyo.yayin.com.tr:8282/;", cat: "Pop" },
-            { id: 62, name: "Enderun FM", logo: "https://od.lk/s/NzJfNTA4NzQxMjlf/enderun-fm-dinle.webp", url: "https://yayin2.canliyayin.org:7052/;stream.mp3", cat: "Pop" },
-            { id: 63, name: "Erciyes Fm", logo: "https://od.lk/s/NzJfNTA4NzQxNDFf/erciyes-fm-dinle.webp", url: "https://sssx.radyosfer.com/erciyesfm/stream:15238;/stream?icy=http", cat: "Arabesk" },
-            { id: 64, name: "Erkam Dinle", logo: "https://od.lk/s/NzJfNTA4NzQxNDRf/erkam-radyo.webp", url: "https://api-tv5.yayin.com.tr:8002/mp3", cat: "Dini" },
-            { id: 65, name: "Erzincan Dost", logo: "https://od.lk/s/NzJfNTA4NzQxODRf/erzincan-dost-radyo-dinle.webp", url: "https://radyo.yayindakiler.com:3156/;stream", cat: "Arabesk" },
-            { id: 66, name: "Erzincan Fm", logo: "https://od.lk/s/NzJfNTA4NzQyMDNf/erzincan-fm-dinle.webp", url: "http://yayin.netyayin.net:2424/stream", cat: "Arabesk" },
-            { id: 67, name: "Erzincan 2000", logo: "https://od.lk/s/NzJfNTA4NzQyNjhf/erzincan-radyo-2000-dinle.webp", url: "https://radyo.yayindakiler.com:3030/stream?/;stream.mp3", cat: "Arabesk" },
-
-
-
-
-
-
-
-
-
-
-            { id: 68, name: "FM", logo: "https://", url: "https://", cat: "Arabesk" },
-            { id: 69, name: "FM", logo: "https://", url: "https://", cat: "Arabesk" },
-            { id: 70, name: "FM", logo: "https://", url: "https://", cat: "Arabesk" },
-
-            { id: 71, name: "FM", logo: "https://", url: "https://", cat: "Arabesk" },
-            { id: 72, name: "FM", logo: "https://", url: "https://", cat: "Arabesk" },
-            { id: 73, name: "FM", logo: "https://", url: "https://", cat: "Arabesk" },
-            { id: 74, name: "FM", logo: "https://", url: "https://", cat: "Arabesk" },
-            { id: 75, name: "FM", logo: "https://", url: "https://", cat: "Arabesk" },
-
-            { id: 76, name: "FM", logo: "https://", url: "https://", cat: "Arabesk" },
-            { id: 77, name: "FM", logo: "https://", url: "https://", cat: "Arabesk" },
-            { id: 78, name: "FM", logo: "https://", url: "https://", cat: "Arabesk" },
-            { id: 79, name: "FM", logo: "https://", url: "https://", cat: "Arabesk" },
-            { id: 80, name: "FM", logo: "https://", url: "https://", cat: "Arabesk" },
-
-
-            { id: 81, name: "FM", logo: "https://", url: "https://", cat: "Arabesk" },
-            { id: 82, name: "FM", logo: "https://", url: "https://", cat: "Arabesk" },
-            { id: 83, name: "FM", logo: "https://", url: "https://", cat: "Arabesk" },
-            { id: 84, name: "FM", logo: "https://", url: "https://", cat: "Arabesk" },
-            { id: 85, name: "FM", logo: "https://", url: "https://", cat: "Arabesk" },
-
-            { id: 86, name: "FM", logo: "https://", url: "https://", cat: "Arabesk" },
-            { id: 87, name: "FM", logo: "https://", url: "https://", cat: "Arabesk" },
-            { id: 88, name: "FM", logo: "https://", url: "https://", cat: "Arabesk" },
-            { id: 89, name: "FM", logo: "https://", url: "https://", cat: "Arabesk" },
-            { id: 90, name: "FM", logo: "https://", url: "https://", cat: "Arabesk" },
-
-
-
-
-
-
-
-            { id: 91, name: "Adana FM", logo: "https://od.lk/s/NzJfNTA4NzEzNThf/adana-fm.webp", url: "https://host.onlineradyotv.net:2020/stream/adanafm", cat: "Arabesk" },
-            { id: 92, name: "Radyo Güney", logo: "https://od.lk/s/NzJfNTA4NzEzODFf/adana-radyo-guney.webp", url: "https://stream.radyolarburada.com/radio/8250/stream", cat: "Arabesk" },
-            { id: 93, name: "Adana FM", logo: "https://od.lk/s/NzJfNTA4NjExMzZf/adana-fm.webp", url: "https://host.onlineradyotv.net:2020/stream/adanafm", cat: "Arabesk" },
-            { id: 94, name: "Güney Radyo", logo: "https://od.lk/s/NzJfNTA4NjExNDRf/adana-radyo-guney.webp", url: "https://stream.radyolarburada.com/radio/8250/stream", cat: "Arabesk" },
-            { id: 95, name: "Adıyaman Radyo Life", logo: "https://od.lk/s/NzJfNTA4NjExOTdf/adiyaman-radyo-life.webp", url: "http://yayin2.canliyayin.org:8698/;*.mp3", cat: "Arabesk" },
-            { id: 96, name: "Adıyaman Radyo Tek", logo: "https://od.lk/s/NzJfNTA4NjEzMDJf/radyo-tek-adiyaman.webp", url: "https://radyo.yayindakiler.com:3102/stream", cat: "Arabesk" },
-            { id: 98, name: "Adıyaman Üniversitesi Radyosu", logo: "https://od.lk/s/NzJfNTA4NjE1MDZf/adyu.webp", url: "https://www.dijiradyo.com/adyufm", cat: "Arabesk" },
-            { id: 99, name: "Dinar Dost FM", logo: "https://od.lk/s/NzJfNTA4NjE3NDJf/afyon-armoni-fm.webp", url: "https://www.dijiradyo.com/afyonarmonifm", cat: "Arabesk" },
-            { id: 100, name: "Dinar Dost FM", logo: "https://od.lk/s/NzJfNTA4NjE3NThf/afyon-gun-fm.webp", url: "https://www.dijiradyo.com/afyongunfm", cat: "Arabesk" },
-            { id: 101, name: "Hatay Melodi FM", logo: "logo/hatay-radyo-melodi-dinle.webp", url: "https://radyomelodi.80.yayin.com.tr//stream", cat: "Arabesk" },
-            { id: 102, name: "Baba Radyo", logo: "logo/baba-radyo.webp", url: "https://live.nscast.net/babaradyo/stream/1", cat: "Arabesk" },
-            { id: 103, name: "Turis FM", logo: "logo/super-fm.webp", url: "https://host.onlineradyotv.net:2020/stream/adanafm", cat: "Pop" },
-            { id: 104, name: "Turis 1 FM", logo: "logo/trt-fm.webp", url: "https://yayin.damarfm.com/stream", cat: "Pop" },
-            { id: 105, name: "turis 2", logo: "logo/diyanet-radyo.webp", url: "http://95.173.162.184:7350/;", cat: "Dini" }
+            { id: 1, name: "A Haber Radyo", logo: "Logolar/a-haber-radyo.webp", url: "https://turkmedya.radyotvonline.net/turkmedya/ahaberradyo.m3u8", cat: "Haber" },
+            { id: 2, name: "A News Radio", logo: "Logolar/a-news-radio.webp", url: "YOUR_STREAM_URL_HERE", cat: "Haber" },
+            { id: 3, name: "A Para Radyo", logo: "Logolar/a-para-radyo-dinle.webp", url: "YOUR_STREAM_URL_HERE", cat: "Haber" },
+            { id: 4, name: "A Spor Radyo", logo: "Logolar/a-spor-radyo.webp", url: "YOUR_STREAM_URL_HERE", cat: "Spor" },
+            { id: 5, name: "Adana FM", logo: "Logolar/adana-fm.webp", url: "https://host.onlineradyotv.net:2020/stream/adanafm", cat: "Arabesk" },
+            { id: 6, name: "Radyo Güney", logo: "Logolar/adana-radyo-guney.webp", url: "https://stream.radyolarburada.com/radio/8250/stream", cat: "Arabesk" },
+            { id: 7, name: "Adıyaman Life", logo: "Logolar/adiyaman-radyo-life.webp", url: "http://yayin2.canliyayin.org:8698/;*.mp3", cat: "Arabesk" },
+            { id: 8, name: "Adıyamanın Sesi", logo: "Logolar/adiyamanin-sesi-radyosu.webp", url: "YOUR_STREAM_URL_HERE", cat: "Arabesk" },
+            { id: 9, name: "Adyu FM", logo: "Logolar/adyu.webp", url: "https://www.dijiradyo.com/adyufm", cat: "Arabesk" },
+            { id: 10, name: "Afyon Armoni", logo: "Logolar/afyon-armoni-fm.webp", url: "https://www.dijiradyo.com/afyonarmonifm", cat: "Arabesk" },
+            { id: 11, name: "Afyon Gün FM", logo: "Logolar/afyon-gun-fm.webp", url: "https://www.dijiradyo.com/afyongunfm", cat: "Arabesk" },
+            { id: 12, name: "Afyon Radyo Tek", logo: "Logolar/afyon-radyo-tek.webp", url: "YOUR_STREAM_URL_HERE", cat: "Arabesk" },
+            { id: 13, name: "Radyo Sultan", logo: "Logolar/afyon-radyoo-sultan.webp", url: "YOUR_STREAM_URL_HERE", cat: "Arabesk" },
+            { id: 14, name: "Akra FM", logo: "Logolar/akra-fm.webp", url: "YOUR_STREAM_URL_HERE", cat: "Dini" }
         ];
 
         function getFavorites() {
@@ -696,5 +578,4 @@
         displayStations(stations);
     </script>
 </body>
-
 </html>
